@@ -2,7 +2,9 @@ import { useLoaderData } from "react-router-dom";
 import { getMenu } from "../../services/apiRestaurant";
 import MenuItem from "./MenuItem";
 
+// this is the menu component
 function Menu() {
+  // useLoaderData holds to data gotten from the api
   const menu = useLoaderData();
 
   return (
@@ -14,6 +16,7 @@ function Menu() {
   );
 }
 
+// function to fetch api pizza data
 export async function loader() {
   const menu = await getMenu();
   return menu;
