@@ -4,9 +4,9 @@ import Header from "./Header";
 import Loader from "./Loader";
 
 const AppLayOut = () => {
+  // we get our state with the useNavigation custom hook
   const navigation = useNavigation();
   const isLoading = navigation.state === "loading";
-  console.log(navigation);
 
   return (
     <div className="layout ">
