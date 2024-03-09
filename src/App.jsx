@@ -4,7 +4,9 @@ import Home from "./ui/Home";
 import Menu, { loader as menuLoader } from "./features/menu/Menu";
 import Order, { loader as orderLoader } from "./features/order/Order";
 import Card from "./features/cart/Cart";
-import CreateOrder from "./features/order/CreateOrder";
+import CreateOrder, {
+  action as createOrderAction,
+} from "./features/order/CreateOrder";
 import AppLayOut from "./ui/AppLayOut";
 import Error from "./ui/Error";
 const router = createBrowserRouter([
@@ -31,7 +33,11 @@ const router = createBrowserRouter([
         loader: orderLoader,
         errorElement: <Error />,
       },
-      { path: "/order/new", element: <CreateOrder /> },
+      {
+        path: "/order/new",
+        element: <CreateOrder />,
+        action: createOrderAction,
+      },
       { path: "/cart", element: <Card /> },
     ],
   },
