@@ -6,16 +6,23 @@ import Order from "./features/order/Order";
 import Card from "./features/cart/Cart";
 import CreateOrder from "./features/order/CreateOrder";
 import AppLayOut from "./ui/AppLayOut";
-
+import Error from "./ui/Error";
 const router = createBrowserRouter([
   {
     element: <AppLayOut />,
+    // this errorElement holds the error component
+    errorElement: <Error />,
 
     children: [
       { path: "/", element: <Home /> },
 
       // the loader holds the api results which is given to the menu component
-      { path: "/menu", element: <Menu />, loader: menuLoader },
+      {
+        path: "/menu",
+        element: <Menu />,
+        loader: menuLoader,
+        errorElement: <Error />,
+      },
 
       { path: "/order/:id", element: <Order /> },
       { path: "/order/new", element: <CreateOrder /> },
@@ -24,6 +31,7 @@ const router = createBrowserRouter([
   },
 ]);
 
+// this is the router provider component
 const App = () => {
   return <RouterProvider router={router} />;
 };
