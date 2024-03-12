@@ -1,13 +1,14 @@
 // import { useState } from "react";
 
-import { Form, redirect } from "react-router-dom";
+import { Form, redirect, useActionData, useNavigation } from "react-router-dom";
 import { createOrder } from "../../services/apiRestaurant";
+import { object } from "prop-types";
 
 // https://uibakery.io/regex-library/phone-number
-// const isValidPhone = (str) =>
-//   /^\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/.test(
-//     str
-//   );
+const isValidPhone = (str) =>
+  /^\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/.test(
+    str
+  );
 
 const fakeCart = [
   {
@@ -35,6 +36,11 @@ const fakeCart = [
 
 function CreateOrder() {
   // const [withPriority, setWithPriority] = useState(false);
+
+  const navigation = useNavigation();
+  const orderStateComponent = navigation.state === "submitting";
+  const formErrors = useActionData();
+
   const cart = fakeCart;
 
   return (
@@ -51,6 +57,7 @@ function CreateOrder() {
           <label>Phone number</label>
           <div>
             <input type="tel" name="phone" required />
+            {formErrors?.phone && <p>{formErrors.phone}</p>}
           </div>
         </div>
 
@@ -75,7 +82,9 @@ function CreateOrder() {
         <div>
           {/* add custom input */}
           <input type="hidden" name="cart" value={JSON.stringify(cart)} />
-          <button>Order now</button>
+          <button disabled={orderStateComponent}>
+            {orderStateComponent ? "creating new order" : "create order"}
+          </button>
         </div>
       </Form>
     </div>
@@ -93,9 +102,16 @@ export async function action({ request }) {
     cart: JSON.parse(data.cart),
     priority: data.priority === "on",
   };
+
+  // this is checking for the right phone number
+  const error = {};
+  if (!isValidPhone(order.phone))
+    error.phone = "please enter a valid phone number";
+  // this is returning the phone number error
+  if (object.key(error).length > 0) return error;
+
   // create newOrder here
   const newOrder = await createOrder(order);
-  console.log(newOrder);
 
   return redirect(`/order/${newOrder.id}`);
 }

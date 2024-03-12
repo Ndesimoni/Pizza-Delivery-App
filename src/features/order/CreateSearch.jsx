@@ -10,6 +10,7 @@ const CreateSearch = () => {
     e.preventDefault();
     if (!query) return;
     navigate(`/order/${query}`);
+    setQuery("");
   };
 
   return (
