@@ -9,6 +9,7 @@ import CreateOrder, {
 } from "./features/order/CreateOrder";
 import AppLayOut from "./ui/AppLayOut";
 import Error from "./ui/Error";
+import "./index.css";
 const router = createBrowserRouter([
   {
     element: <AppLayOut />,

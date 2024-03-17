@@ -7,16 +7,24 @@ const AppLayOut = () => {
   // we get our state with the useNavigation custom hook
   const navigation = useNavigation();
   const isLoading = navigation.state === "loading";
+  
+
 
   return (
-    <div className="layout ">
-      {isLoading && <Loader />}
+    <div className="grid grid-rows-[auto_1fr_auto] h-screen ">
+      {isLoading&& <Loader />}
+  
+
       <Header />
 
-      <main>
-        <Outlet />
-      </main>
+       <div className="overflow-auto">
+          <main className="  mx-auto max-w-3xl">
+          <Outlet />
+          </main>
+      </div> 
+
       <CartOverview />
+     
     </div>
   );
 };
