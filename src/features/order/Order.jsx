@@ -48,6 +48,7 @@ function Order() {
       </div>
 
         <ul className=" dive-stone-200 divide-y border-t  border-b">  {cart.map((items)=><OrderItem item={items} key={items.id}/>)}</ul>
+      
 
 
       <div className="space-y-2 bg-stone-200 px-6 py-5">
