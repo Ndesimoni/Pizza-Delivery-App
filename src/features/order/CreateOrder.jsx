@@ -2,10 +2,15 @@
 
 import { Form, redirect, useActionData, useNavigation } from "react-router-dom";
 import { createOrder } from "../../services/apiRestaurant";
+import EmptyCart from "../cart/EmptyCart";
 
 import Button from "../../ui/Button";
-import { useSelector } from "react-redux";
-
+import { useDispatch, useSelector } from "react-redux";
+import { clearItems, getCart, getTotalCartPrice } from "../cart/cartSlice";
+import store from "../../store";
+import { formatCurrency } from "../../utils/helpers";
+import { useState } from "react";
+import { fetchAddress } from "../user/userSlice";
 
 // https://uibakery.io/regex-library/phone-number
 const isValidPhone = (str) =>
@@ -13,41 +18,30 @@ const isValidPhone = (str) =>
     str
   );
 
-const fakeCart = [
-  {
-    pizzaId: 12,
-    name: "Mediterranean",
-    quantity: 2,
-    unitPrice: 16,
-    totalPrice: 32,
-  },
-  {
-    pizzaId: 6,
-    name: "Vegetable",
-    quantity: 1,
-    unitPrice: 13,
-    totalPrice: 13,
-  },
-  {
-    pizzaId: 11,
-    name: "Spinach and Mushroom",
-    quantity: 1,
-    unitPrice: 15,
-    totalPrice: 15,
-  },
-];
-
 function CreateOrder() {
-  // const [withPriority, setWithPriority] = useState(false);
+  const [withPriority, setWithPriority] = useState(false);
+  const dispatch = useDispatch();
 
-  const username = useSelector(state=>state.user.username)
+  const {
+    username,
+    status: addressStatus,
+    position,
+    address,
+  } = useSelector((state) => state.user);
+  console.log(address);
+
+  const isLoadingAddress = addressStatus === "loading";
 
   const navigation = useNavigation();
   const orderStateComponent = navigation.state === "submitting";
   const formErrors = useActionData();
- 
+  const cart = useSelector(getCart);
 
-  const cart = fakeCart;
+  const totalCartPrice = useSelector(getTotalCartPrice);
+  const priority = withPriority ? totalCartPrice * 0.2 : 0;
+  const totalPrice = totalCartPrice + priority;
+
+  if (!cart.length) return <EmptyCart />;
 
   return (
     <div className="px-4 py-6">
@@ -57,26 +51,55 @@ function CreateOrder() {
       <Form method="Post">
         <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center">
           <label className="sm:basis-40">First Name</label>
-          <input type="text" name="customer" defaultValue={username} required className="input grow"/>
+          <input
+            type="text"
+            name="customer"
+            defaultValue={username}
+            required
+            className="input grow"
+          />
         </div>
 
         <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center">
           <label className="sm:basis-40">Phone number</label>
-          <div className="grow"> 
+          <div className="grow">
+            <input type="tel" name="phone" required className="input w-full" />
 
-            <input type="tel" name="phone" required  className="input w-full"/>
-
-            {formErrors?.phone && <p className="mt-2 text-red-600 text-xs bg-red-100 p-2 rounded-full">{formErrors.phone}</p>}
-
+            {formErrors?.phone && (
+              <p className="mt-2 text-red-600 text-xs bg-red-100 p-2 rounded-full">
+                {formErrors.phone}
+              </p>
+            )}
           </div>
         </div>
 
-        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center relative">
           <label className="sm:basis-40">Address</label>
           <div className="grow">
-            <input type="text" name="address" required
-             className="input w-full"  />
+            <input
+              disabled={isLoadingAddress}
+              type="text"
+              name="address"
+              required
+              defaultValue={address}
+              className="input w-full"
+            />
           </div>
+
+          {!position.latitude && !position.longitude && (
+            <span className="absolute right-[5px] pb-2">
+              <Button
+                disabled={isLoadingAddress}
+                type="small"
+                onClick={(e) => {
+                  e.preventDefault();
+                  dispatch(fetchAddress());
+                }}
+              >
+                get position
+              </Button>
+            </span>
+          )}
         </div>
 
         <div className=" mb-12 flex items-center gap-5">
@@ -87,25 +110,23 @@ function CreateOrder() {
             className="w-4 h-4 accent-blue-500 
             focus:ring focus:outline-none
              focus:ring-blue-500 focus:ring-offset-2"
-            // value={withPriority}
-            // onChange={(e) => setWithPriority(e.target.checked)}
-
+            value={withPriority}
+            onChange={(e) => setWithPriority(e.target.checked)}
           />
-          <label htmlFor="priority" className="font-medium">Want to yo give your order priority?</label>
+          <label htmlFor="priority" className="font-medium">
+            Want to yo give your order priority?
+          </label>
         </div>
 
         <div>
           {/* add custom input */}
           <input type="hidden" name="cart" value={JSON.stringify(cart)} />
 
-          {/* <button disabled={orderStateComponent}>
-            {orderStateComponent ? "creating new order" : " order now"}
-          </button> */}
-
-          <Button disabled={orderStateComponent} type="primary"> 
-            {orderStateComponent ? "creating new order" : " order now"} 
+          <Button disabled={isLoadingAddress} type="primary">
+            {orderStateComponent
+              ? "creating new order"
+              : `order now for: ${formatCurrency(totalPrice)}`}
           </Button>
-
         </div>
       </Form>
     </div>
@@ -116,12 +137,11 @@ export async function action({ request }) {
   const formData = await request.formData();
   //  turn function to object
   const data = Object.fromEntries(formData);
-  
 
   const order = {
     ...data,
     cart: JSON.parse(data.cart),
-    priority: data.priority === "on",
+    priority: data.priority === "true",
   };
 
   // this is checking for the right phone number
@@ -133,6 +153,8 @@ export async function action({ request }) {
 
   // create newOrder here
   const newOrder = await createOrder(order);
+  // do not over use this method it kills performance
+  store.dispatch(clearItems());
 
   return redirect(`/order/${newOrder.id}`);
 }
